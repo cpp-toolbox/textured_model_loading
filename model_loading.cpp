@@ -68,17 +68,17 @@ void Mesh::bind_vertex_data_to_opengl_for_later_use() {
 void Mesh::bind_vertex_attribute_interpretation_to_opengl_for_later_use(ShaderPipeline &shader_pipeline) {
 
     // vertex positions
-    GLuint vpos_location = glGetAttribLocation(shader_pipeline.shader_program_id, "vPos");
-    glEnableVertexAttribArray(vpos_location);
-    glVertexAttribPointer(vpos_location, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) 0);
+    GLuint position_location = glGetAttribLocation(shader_pipeline.shader_program_id, "position");
+    glEnableVertexAttribArray(position_location);
+    glVertexAttribPointer(position_location, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) 0);
 
     // vertex normals
-    GLuint vnorm_location = glGetAttribLocation(shader_pipeline.shader_program_id, "vNorm");
+    GLuint vnorm_location = glGetAttribLocation(shader_pipeline.shader_program_id, "normal");
     glEnableVertexAttribArray(vnorm_location);
     glVertexAttribPointer(vnorm_location, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, normal));
 
     // vertex texture positions
-    GLuint vtexpos_location = glGetAttribLocation(shader_pipeline.shader_program_id, "vTexPos");
+    GLuint vtexpos_location = glGetAttribLocation(shader_pipeline.shader_program_id, "passthrough_texture_position");
     glEnableVertexAttribArray(vtexpos_location);
     glVertexAttribPointer(vtexpos_location, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, texture_coordinate));
 };
