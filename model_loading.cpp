@@ -20,6 +20,7 @@
  * notes:
  * 	the bottleneck of this program is the image loading, everything else like the vertex loading from assimp is actually really fast
  *
+ *
  */
 
 Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures) {
@@ -28,8 +29,8 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std:
     this->textures = std::move(textures);
 };
 
-void Mesh::draw(ShaderPipeline &shader_pipeline) {
-    glUseProgram(shader_pipeline.shader_program_id);
+void Mesh::draw(GLuint shader_program_id) {
+    glUseProgram(shader_program_id);
     GLuint id = this->textures.front().id;
     glBindTexture(GL_TEXTURE_2D, id);
     glBindVertexArray(vertex_attribute_object);
@@ -65,45 +66,60 @@ void Mesh::bind_vertex_data_to_opengl_for_later_use() {
  * \todo this is the wrong way of going about things, a better way
  *  would be to just load in the shaders we need and make like a model loading shader.
  */
-void Mesh::bind_vertex_attribute_interpretation_to_opengl_for_later_use(ShaderPipeline &shader_pipeline) {
+void Mesh::bind_vertex_attribute_interpretation_to_opengl_for_later_use(GLuint shader_program_id) {
 
     // vertex positions
-    GLuint position_location = glGetAttribLocation(shader_pipeline.shader_program_id, "position");
+    GLuint position_location = glGetAttribLocation(shader_program_id, "position");
     glEnableVertexAttribArray(position_location);
     glVertexAttribPointer(position_location, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) 0);
 
     // vertex normals
-    GLuint vnorm_location = glGetAttribLocation(shader_pipeline.shader_program_id, "normal");
+    GLuint vnorm_location = glGetAttribLocation(shader_program_id, "normal");
     glEnableVertexAttribArray(vnorm_location);
-    glVertexAttribPointer(vnorm_location, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, normal));
+    glVertexAttribPointer(vnorm_location, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, normal));
 
     // vertex texture positions
-    GLuint vtexpos_location = glGetAttribLocation(shader_pipeline.shader_program_id, "passthrough_texture_position");
+    GLuint vtexpos_location = glGetAttribLocation(shader_program_id, "passthrough_texture_position");
     glEnableVertexAttribArray(vtexpos_location);
-    glVertexAttribPointer(vtexpos_location, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, texture_coordinate));
+    glVertexAttribPointer(vtexpos_location, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          (void *) offsetof(Vertex, texture_coordinate));
 };
 
-void Mesh::configure_vertex_interpretation_for_shader(ShaderPipeline &shader_pipeline) {
+void Mesh::configure_vertex_interpretation_for_shader(GLuint shader_program_id) {
     glGenVertexArrays(1, &vertex_attribute_object);
     this->bind_vertex_data_to_opengl_for_later_use();
-    this->bind_vertex_attribute_interpretation_to_opengl_for_later_use(shader_pipeline);
+    this->bind_vertex_attribute_interpretation_to_opengl_for_later_use(shader_program_id);
     // Unbind the current VAO because we're not drawing at this point in time and we don't want anyone else to accidentally while drawing and plus we don't just give functions side effects for no reason.
     glBindVertexArray(0);
 };
 
-void Model::draw(ShaderPipeline &shader_pipeline) {
+/**
+ *
+ * \brief loads a 3d model into wrapper structure
+ *
+ * \pre the shader files specified exist and are at this file path
+ * \todo have a resource directory so that we don't have to specify a long relative path
+ *
+ * @param path the path to the model we want to load
+ */
+Model::Model(std::string path, GLuint shader_program_id)  {
+    this->shader_program_id = shader_program_id;
+    this->load_model(std::move(path));
+    this->configure_vertex_interpretation_for_shader();
+}
+
+void Model::draw() {
     for (unsigned int i = 0; i < this->meshes.size(); i++) {
-        this->meshes[i].draw(shader_pipeline);
+        this->meshes[i].draw(this->shader_program_id);
     }
 };
 
 /**
- * NOTE: apparently we have to run this before doing anything, or else doesn't work
- * SUPER BAD need to fix that
+ * \pre the shader pipeline must be initialized
  */
-void Model::configure_vertex_interpretation_for_shader(ShaderPipeline &shader_pipeline) {
+void Model::configure_vertex_interpretation_for_shader() {
     for (unsigned int i = 0; i < this->meshes.size(); i++) {
-        this->meshes[i].configure_vertex_interpretation_for_shader(shader_pipeline);
+        this->meshes[i].configure_vertex_interpretation_for_shader(this->shader_program_id);
     }
 }
 
@@ -202,7 +218,8 @@ std::vector<Texture> Model::process_mesh_materials(aiMesh *mesh, const aiScene *
         std::vector<Texture> diffuse_maps = load_material_textures(material, aiTextureType_DIFFUSE, "texture_diffuse");
         textures.insert(textures.end(), diffuse_maps.begin(), diffuse_maps.end());
 
-        std::vector<Texture> specular_maps = load_material_textures(material, aiTextureType_SPECULAR, "texture_specular");
+        std::vector<Texture> specular_maps = load_material_textures(material, aiTextureType_SPECULAR,
+                                                                    "texture_specular");
         textures.insert(textures.end(), specular_maps.begin(), specular_maps.end());
     }
     return textures;
@@ -241,7 +258,8 @@ unsigned int texture_from_file(const char *path, const std::string &directory, b
         //throw;
     }
 
-    printf("loading file: %s with width: %d, height: %d, and has %d components\n", filename.c_str(), width, height, num_components);
+    printf("loading file: %s with width: %d, height: %d, and has %d components\n", filename.c_str(), width, height,
+           num_components);
     if (data) {
         GLenum format = 0;
         // TODO use a switch
@@ -294,7 +312,8 @@ std::vector<Texture> Model::load_material_textures(aiMaterial *material, aiTextu
     for (unsigned int i = 0; i < material->GetTextureCount(type); i++) {
         aiString texture_path;
         material->GetTexture(type, i, &texture_path);
-        bool texture_already_loaded; int index_of_already_loaded_texture;
+        bool texture_already_loaded;
+        int index_of_already_loaded_texture;
 
         std::tie(texture_already_loaded, index_of_already_loaded_texture) = this->texture_already_loaded(texture_path);
 

@@ -8,7 +8,6 @@
 #include "assimp/scene.h"
 #include "../shader_pipeline/shader_pipeline.hpp"
 
-
 /**
  * description:
  * 	a vertex in the context of a 3d model
@@ -49,13 +48,12 @@ public:
     std::vector<unsigned int> indices;
     std::vector<Texture> textures;
     Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
-    void draw(ShaderPipeline &shader_pipeline);
-    void configure_vertex_interpretation_for_shader(ShaderPipeline &shader_pipeline);
+    void draw(GLuint shader_program_id);
+    void configure_vertex_interpretation_for_shader(GLuint shader_program_id);
 private:
     void bind_vertex_data_to_opengl_for_later_use();
-    void bind_vertex_attribute_interpretation_to_opengl_for_later_use(ShaderPipeline &shader_pipeline);
+    void bind_vertex_attribute_interpretation_to_opengl_for_later_use(GLuint shader_program_id);
     unsigned int vertex_attribute_object{}, vertex_buffer_object{}, element_buffer_object{};
-    void setup_mesh(ShaderPipeline &shader_pipeline);
 };
 
 /**
@@ -63,6 +61,7 @@ private:
  * 	this is not really a model, it's a thing that creates a model...
  * 	this is a different kind of object then a mesh in a way
  * 	one way to fix this is to make a true model class and then make this a model_creator class or something like that
+ * 	for the future, it works now.
  *
  * description:
  * 	a collection of meshes, provides the ability to load from file and to draw it
@@ -73,13 +72,16 @@ private:
 class Model {
 public:
     // Should the shader be stored inside of the model class? Unique to each shader?
-    void load_model(std::string path);
-    void draw(ShaderPipeline &shader_pipeline);
-    void configure_vertex_interpretation_for_shader(ShaderPipeline &shader_pipeline);
+    Model(std::string path, GLuint shader_program_id);
+    void draw();
+    void configure_vertex_interpretation_for_shader();
     std::vector<Mesh> meshes;
 private:
-    std::string directory;
 
+    void load_model(std::string path);
+    GLuint shader_program_id;
+
+    std::string directory;
     std::vector<Texture> already_loaded_textures;
 
     void process_node(aiNode *node, const aiScene *scene);
