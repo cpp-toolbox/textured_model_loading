@@ -15,10 +15,12 @@
  * 		we store all the images we found in the base model, this is the initialization phase.
  *
  * drawing:
- *	iterate through every mesh, load up it's vao and related texture and draw the vertices through the shader pipeline
+ *	iterate through every mesh, load up it's vao and related texture and draw the vertices through the shader
+ *pipeline
  *
  * notes:
- * 	the bottleneck of this program is the image loading, everything else like the vertex loading from assimp is actually really fast
+ * 	the bottleneck of this program is the image loading, everything else like the vertex loading from assimp is
+ *actually really fast
  *
  *
  */
@@ -36,6 +38,7 @@ void Mesh::draw(GLuint shader_program_id) {
     glBindVertexArray(vertex_attribute_object);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0); // unbinds current vertex_attribute_object
+    glUseProgram(0);
 };
 
 /**
@@ -58,7 +61,6 @@ void Mesh::bind_vertex_data_to_opengl_for_later_use() {
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer_object);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
-
 };
 
 /**
@@ -71,25 +73,26 @@ void Mesh::bind_vertex_attribute_interpretation_to_opengl_for_later_use(GLuint s
     // vertex positions
     GLuint position_location = glGetAttribLocation(shader_program_id, "position");
     glEnableVertexAttribArray(position_location);
-    glVertexAttribPointer(position_location, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) 0);
+    glVertexAttribPointer(position_location, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0);
 
     // vertex normals
     GLuint vnorm_location = glGetAttribLocation(shader_program_id, "normal");
     glEnableVertexAttribArray(vnorm_location);
-    glVertexAttribPointer(vnorm_location, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, normal));
+    glVertexAttribPointer(vnorm_location, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, normal));
 
     // vertex texture positions
     GLuint vtexpos_location = glGetAttribLocation(shader_program_id, "passthrough_texture_position");
     glEnableVertexAttribArray(vtexpos_location);
     glVertexAttribPointer(vtexpos_location, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-                          (void *) offsetof(Vertex, texture_coordinate));
+                          (void *)offsetof(Vertex, texture_coordinate));
 };
 
 void Mesh::configure_vertex_interpretation_for_shader(GLuint shader_program_id) {
     glGenVertexArrays(1, &vertex_attribute_object);
     this->bind_vertex_data_to_opengl_for_later_use();
     this->bind_vertex_attribute_interpretation_to_opengl_for_later_use(shader_program_id);
-    // Unbind the current VAO because we're not drawing at this point in time and we don't want anyone else to accidentally while drawing and plus we don't just give functions side effects for no reason.
+    // Unbind the current VAO because we're not drawing at this point in time and we don't want anyone else to
+    // accidentally while drawing and plus we don't just give functions side effects for no reason.
     glBindVertexArray(0);
 };
 
@@ -102,7 +105,7 @@ void Mesh::configure_vertex_interpretation_for_shader(GLuint shader_program_id) 
  *
  * @param path the path to the model we want to load
  */
-Model::Model(std::string path, GLuint shader_program_id)  {
+Model::Model(std::string path, GLuint shader_program_id) {
     this->shader_program_id = shader_program_id;
     this->load_model(std::move(path));
     this->configure_vertex_interpretation_for_shader();
@@ -163,11 +166,9 @@ void Model::process_node(aiNode *node, const aiScene *scene) {
     }
 };
 
-
 glm::vec3 assimp_to_glm_3d_vector(aiVector3D assimp_vector) {
     return {assimp_vector.x, assimp_vector.y, assimp_vector.z};
 }
-
 
 std::vector<Vertex> Model::process_mesh_vertices(aiMesh *mesh) {
     std::vector<Vertex> vertices;
@@ -218,8 +219,8 @@ std::vector<Texture> Model::process_mesh_materials(aiMesh *mesh, const aiScene *
         std::vector<Texture> diffuse_maps = load_material_textures(material, aiTextureType_DIFFUSE, "texture_diffuse");
         textures.insert(textures.end(), diffuse_maps.begin(), diffuse_maps.end());
 
-        std::vector<Texture> specular_maps = load_material_textures(material, aiTextureType_SPECULAR,
-                                                                    "texture_specular");
+        std::vector<Texture> specular_maps =
+            load_material_textures(material, aiTextureType_SPECULAR, "texture_specular");
         textures.insert(textures.end(), specular_maps.begin(), specular_maps.end());
     }
     return textures;
@@ -240,7 +241,7 @@ Mesh Model::process_mesh(aiMesh *mesh, const aiScene *scene) {
 unsigned int texture_from_file(const char *path, const std::string &directory, bool gamma = false) {
     std::string filename = std::string(path);
     // we don't need this because file paths are stored correctly in the mtl file.
-    //filename = directory + '/' + filename;
+    // filename = directory + '/' + filename;
 
     unsigned int texture_id;
     glGenTextures(1, &texture_id);
@@ -249,13 +250,9 @@ unsigned int texture_from_file(const char *path, const std::string &directory, b
 
     unsigned char *data = stbi_load(filename.c_str(), &width, &height, &num_components, 0);
 
-
     if (!data) {
-        std::cout
-                << "unable to load image: "
-                << stbi_failure_reason()
-                << "\n";
-        //throw;
+        std::cout << "unable to load image: " << stbi_failure_reason() << "\n";
+        // throw;
     }
 
     printf("loading file: %s with width: %d, height: %d, and has %d components\n", filename.c_str(), width, height,
@@ -284,7 +281,6 @@ unsigned int texture_from_file(const char *path, const std::string &directory, b
 
     } else {
         std::cout << "Texture failed to load texture at path: " << path << std::endl;
-
     }
     stbi_image_free(data);
 
@@ -329,7 +325,4 @@ std::vector<Texture> Model::load_material_textures(aiMaterial *material, aiTextu
         }
     }
     return textures;
-
 };
-
-
