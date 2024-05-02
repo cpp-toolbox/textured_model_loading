@@ -5,6 +5,7 @@ Code which loads in obj models with textures using assimp to be rendered with op
 # Depdendencies
 
 * [glm](https://github.com/g-truc/glm)
+* [shader pipeline](https://github.com/opengl-toolbox/shader_pipeline)
 
 # CMake
 
