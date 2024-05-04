@@ -36,5 +36,5 @@ include_directories(external_libraries/stb)
 
 ... 
 
-target_link_libraries(your_project_name ... )
+target_link_libraries(your_project_name ... assimp)
 ```
