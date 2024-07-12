@@ -1,5 +1,5 @@
-#ifndef MODEL_LOADING_HPP
-#define MODEL_LOADING_HPP
+#ifndef TEXTURED_MODEL_LOADING_HPP
+#define TEXTURED_MODEL_LOADING_HPP
 
 #include "glm/glm.hpp"
 #include <string>
@@ -107,4 +107,4 @@ class Model {
                                                 std::string type_name);
 };
 
-#endif // MODEL_LOADING_HPP
+#endif // TEXTURED_MODEL_LOADING_HPP

@@ -1,6 +1,9 @@
 # Info
 
-Code which loads in obj models with textures using assimp to be rendered with opengl
+Code which loads in obj models with textures using assimp to be rendered with opengl. 
+
+WARNING: You must following the variable naming guidelines defined in the `shaders` submodule or else nothing will be rendered
+as the code that binds to the vertex attributes will get the wrong variable
 
 # Dependencies
 

@@ -1,12 +1,12 @@
-#include "glad/gl.h"
-#include "model_loading.hpp"
+#include "glad/glad.h"
+#include "textured_model_loading.hpp"
 
 #include <iostream>
 
 #include "assimp/Importer.hpp"
 #include <utility>
 #include "assimp/postprocess.h"
-#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION // NOTE THIS LINE MUST NOT APPEAR ANYWHERE ELSE!!
 #include "stb_image.h"
 
 /**
@@ -66,8 +66,8 @@ void Mesh::bind_vertex_data_to_opengl_for_later_use() {
 
 /**
  * \pre this mesh's vao is bound
- * \todo this is the wrong way of going about things, a better way
- *  would be to just load in the shaders we need and make like a model loading shader.
+ * \warning if you get black
+ *
  */
 void Mesh::bind_vertex_attribute_interpretation_to_opengl_for_later_use(GLuint shader_program_id) {
 
@@ -293,7 +293,7 @@ unsigned int texture_from_file(const char *path, const std::string &directory, b
  * otherwise the texture is not loaded and -1 is returned as the index
  */
 std::tuple<bool, int> Model::texture_already_loaded(aiString texture_path) {
-    printf("started checking for texture, there are %d textures to pick from\n", this->already_loaded_textures.size());
+    printf("started checking for texture, so far there are %d textures to pick from\n", this->already_loaded_textures.size());
     for (unsigned int j = 0; j < this->already_loaded_textures.size(); j++) {
         const char *already_loaded_path = already_loaded_textures[j].path.data();
         const char *query_path = texture_path.C_Str();
