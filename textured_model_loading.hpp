@@ -4,13 +4,13 @@
 #include "glm/glm.hpp"
 #include <string>
 #include <vector>
+#include <GLFW/glfw3.h>
+#include <assimp/scene.h>
 
-#include "../shader_pipeline/shader_pipeline.hpp"
 // #include <assimp/scene.h>  had to comment this out because clang can't find
 // it
 // #include "../../external_libraries/assimp/include/assimp/scene.h"
 
-#include <assimp/scene.h>
 
 /**
  * description:
@@ -51,17 +51,22 @@ struct Texture {
  *
  */
 class Mesh {
-  public:
+public:
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     std::vector<Texture> textures;
+
     Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
+
     void draw(GLuint shader_program_id);
+
     void configure_vertex_interpretation_for_shader(GLuint shader_program_id);
 
-  private:
+private:
     void bind_vertex_data_to_opengl_for_later_use();
+
     void bind_vertex_attribute_interpretation_to_opengl_for_later_use(GLuint shader_program_id);
+
     unsigned int vertex_attribute_object{}, vertex_buffer_object{}, element_buffer_object{};
 };
 
@@ -80,16 +85,20 @@ class Mesh {
  * 	a 3d model that represents the entire burger as in the mesh example
  */
 class Model {
-  public:
+public:
     // Should the shader be stored inside of the model class? Unique to each
     // shader?
     Model(std::string path, GLuint shader_program_id);
+
     void draw();
+
     void configure_vertex_interpretation_for_shader();
+
     std::vector<Mesh> meshes;
 
-  private:
+private:
     void load_model(std::string path);
+
     GLuint shader_program_id;
 
     std::string directory;
@@ -98,11 +107,15 @@ class Model {
     void process_node(aiNode *node, const aiScene *scene);
 
     std::vector<Vertex> process_mesh_vertices(aiMesh *mesh);
+
     std::vector<unsigned int> process_mesh_indices(aiMesh *mesh);
+
     std::vector<Texture> process_mesh_materials(aiMesh *mesh, const aiScene *scene);
+
     Mesh process_mesh(aiMesh *mesh, const aiScene *scene);
 
     std::tuple<bool, int> texture_already_loaded(aiString texture_path);
+
     std::vector<Texture> load_material_textures(aiMaterial *material, aiTextureType texture_type,
                                                 std::string type_name);
 };
