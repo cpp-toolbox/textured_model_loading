@@ -133,7 +133,7 @@ void Model::configure_vertex_interpretation_for_shader() {
  * 	- although this function looks short and simple, the call to process_node
  * 	is recursive and does all the work of parsing assimp's structure
  */
-void Model::load_model(std::string path) {
+void Model::load_model(const std::string &path) {
     Assimp::Importer importer;
     const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate);
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
@@ -141,6 +141,7 @@ void Model::load_model(std::string path) {
         return;
     }
     this->directory = path.substr(0, path.find_last_of("/"));
+    printf("directory = %s", this->directory.c_str());
     printf("starting to process nodes \n");
     this->process_node(scene->mRootNode, scene);
     printf("processed all nodes\n");
@@ -241,8 +242,7 @@ Mesh Model::process_mesh(aiMesh *mesh, const aiScene *scene) {
 
 unsigned int texture_from_file(const char *path, const std::string &directory, bool gamma = false) {
     std::string filename = std::string(path);
-    // we don't need this because file paths are stored correctly in the mtl file.
-    // filename = directory + '/' + filename;
+    filename = directory + '/' + filename;
 
     unsigned int texture_id;
     glGenTextures(1, &texture_id);
@@ -293,7 +293,8 @@ unsigned int texture_from_file(const char *path, const std::string &directory, b
  * otherwise the texture is not loaded and -1 is returned as the index
  */
 std::tuple<bool, int> Model::texture_already_loaded(aiString texture_path) {
-    printf("started checking for texture, so far there are %d textures to pick from\n", this->already_loaded_textures.size());
+    printf("started checking for texture, so far there are %d textures to pick from\n",
+           this->already_loaded_textures.size());
     for (unsigned int j = 0; j < this->already_loaded_textures.size(); j++) {
         const char *already_loaded_path = already_loaded_textures[j].path.data();
         const char *query_path = texture_path.C_Str();

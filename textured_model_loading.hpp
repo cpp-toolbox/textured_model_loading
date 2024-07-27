@@ -11,7 +11,6 @@
 // it
 // #include "../../external_libraries/assimp/include/assimp/scene.h"
 
-
 /**
  * description:
  * 	a vertex in the context of a 3d model
@@ -51,7 +50,7 @@ struct Texture {
  *
  */
 class Mesh {
-public:
+  public:
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     std::vector<Texture> textures;
@@ -62,7 +61,7 @@ public:
 
     void configure_vertex_interpretation_for_shader(GLuint shader_program_id);
 
-private:
+  private:
     void bind_vertex_data_to_opengl_for_later_use();
 
     void bind_vertex_attribute_interpretation_to_opengl_for_later_use(GLuint shader_program_id);
@@ -85,7 +84,7 @@ private:
  * 	a 3d model that represents the entire burger as in the mesh example
  */
 class Model {
-public:
+  public:
     // Should the shader be stored inside of the model class? Unique to each
     // shader?
     Model(std::string path, GLuint shader_program_id);
@@ -96,8 +95,10 @@ public:
 
     std::vector<Mesh> meshes;
 
-private:
-    void load_model(std::string path);
+  private:
+    std::string path_to_assets_directory = "assets";
+
+    void load_model(const std::string &path);
 
     GLuint shader_program_id;
 
