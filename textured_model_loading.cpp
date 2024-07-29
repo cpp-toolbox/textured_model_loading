@@ -3,11 +3,14 @@
 
 #include <iostream>
 
+#include <spdlog/spdlog.h>
 #include "assimp/Importer.hpp"
 #include <utility>
 #include "assimp/postprocess.h"
 #define STB_IMAGE_IMPLEMENTATION // NOTE THIS LINE MUST NOT APPEAR ANYWHERE ELSE!!
 #include "stb_image.h"
+
+#include "sbpt_generated_includes.hpp"
 
 /**
  * overview:
@@ -21,7 +24,7 @@
  *
  * notes:
  * 	the bottleneck of this program is the image loading, everything else like the vertex loading from assimp is
- *actually really fast
+ *      actually really fast
  *
  *
  */
@@ -141,10 +144,9 @@ void Model::load_model(const std::string &path) {
         return;
     }
     this->directory = path.substr(0, path.find_last_of("/"));
-    printf("directory = %s", this->directory.c_str());
-    printf("starting to process nodes \n");
+    spdlog::get(Systems::asset_loading)->info("starting to process nodes");
     this->process_node(scene->mRootNode, scene);
-    printf("processed all nodes\n");
+    spdlog::get(Systems::asset_loading)->info("processed all nodes");
 };
 
 /**
@@ -157,12 +159,12 @@ void Model::load_model(const std::string &path) {
  * 	folders (I believe a folder is called a collection) and just represents arbitrary nesting
  */
 void Model::process_node(aiNode *node, const aiScene *scene) {
-    printf("stared processing meshes\n");
+    spdlog::get(Systems::asset_loading)->info("stared processing meshes");
     for (unsigned int i = 0; i < node->mNumMeshes; i++) {
         aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         this->meshes.push_back(this->process_mesh(mesh, scene));
     }
-    printf("finished processing meshes\n");
+    spdlog::get(Systems::asset_loading)->info("finished processing meshes");
     for (unsigned int i = 0; i < node->mNumChildren; i++) {
         process_node(node->mChildren[i], scene);
     }
@@ -176,7 +178,7 @@ std::vector<Vertex> Model::process_mesh_vertices(aiMesh *mesh) {
     std::vector<Vertex> vertices;
 
     bool mesh_has_texture_coordinates = mesh->mTextureCoords[0] != nullptr;
-    printf("This mesh has %d vertices\n", mesh->mNumVertices);
+    spdlog::get(Systems::asset_loading)->info("This mesh has {} vertices", mesh->mNumVertices);
     for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
         Vertex vertex;
 
@@ -252,12 +254,14 @@ unsigned int texture_from_file(const char *path, const std::string &directory, b
     unsigned char *data = stbi_load(filename.c_str(), &width, &height, &num_components, 0);
 
     if (!data) {
-        std::cout << "unable to load image: " << stbi_failure_reason() << "\n";
+        spdlog::get(Systems::asset_loading)->error("unable to load image: {}", stbi_failure_reason());
         // throw;
     }
 
-    printf("loading file: %s with width: %d, height: %d, and has %d components\n", filename.c_str(), width, height,
-           num_components);
+    spdlog::get(Systems::asset_loading)
+        ->info("loading file: {} with width: {}, height: {}, and has {} components", filename.c_str(), width, height,
+               num_components);
+
     if (data) {
         GLenum format = 0;
         // TODO use a switch
@@ -293,8 +297,10 @@ unsigned int texture_from_file(const char *path, const std::string &directory, b
  * otherwise the texture is not loaded and -1 is returned as the index
  */
 std::tuple<bool, int> Model::texture_already_loaded(aiString texture_path) {
-    printf("started checking for texture, so far there are %d textures to pick from\n",
-           this->already_loaded_textures.size());
+    spdlog::get(Systems::asset_loading)
+        ->info("started checking for texture, so far there are {} textures to pick from",
+               this->already_loaded_textures.size());
+
     for (unsigned int j = 0; j < this->already_loaded_textures.size(); j++) {
         const char *already_loaded_path = already_loaded_textures[j].path.data();
         const char *query_path = texture_path.C_Str();
