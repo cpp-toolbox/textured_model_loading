@@ -8,7 +8,7 @@
 #include <GLFW/glfw3.h>
 #include <assimp/scene.h>
 
-#include "model_loading.hpp"
+#include "../../utils/model_loading/model_loading.hpp"
 
 enum TextureType { DIFFUSE, SPECULAR };
 
