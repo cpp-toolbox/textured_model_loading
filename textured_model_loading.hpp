@@ -3,122 +3,56 @@
 
 #include "glm/glm.hpp"
 #include <string>
+#include <utility>
 #include <vector>
 #include <GLFW/glfw3.h>
 #include <assimp/scene.h>
 
-// #include <assimp/scene.h>  had to comment this out because clang can't find
-// it
-// #include "../../external_libraries/assimp/include/assimp/scene.h"
+#include "model_loading.hpp"
 
-/**
- * description:
- * 	a vertex in the context of a 3d model
- */
-struct Vertex {
-    glm::vec3 position;
-    // A vertex doesn't really have a normal, but if we consider it
-    // as part of a face, then it does, and could have many by
-    // specifying it more than once in the input vertex list
-    glm::vec3 normal;
-    glm::vec2 texture_coordinate;
-};
+enum TextureType { DIFFUSE, SPECULAR };
 
-/**
- * description:
- * 	a texture along with a unique identifier having either specular or
- * diffuse type
- */
-struct Texture {
-    unsigned int id;
-    std::string type;
+struct TextureInfo {
+    TextureType type;
     std::string path;
 };
 
-/**
- * description:
- * 	a collection of vertices along with an ordering of how to traverse along
- * with a texture for the mesh
- *
- * notes:
- * 	 this mesh does not incorporate lighting and we will only apply one
- * texture
- *
- * example:
- * 	a simple hamburger 3d model might have 3 meshes, one for the bottom bun,
- * the burger and the top bun
- *
- */
-class Mesh {
+class TexturedMesh : public Mesh {
   public:
-    std::vector<Vertex> vertices;
-    std::vector<unsigned int> indices;
-    std::vector<Texture> textures;
+    TexturedMesh(std::vector<glm::vec3> vertex_positions, std::vector<unsigned int> indices,
+                 std::vector<glm::vec2> texture_coordinates, std::vector<glm::vec3> normals,
+                 std::vector<TextureInfo> &used_textures)
+        : Mesh(vertex_positions, indices), texture_coordinates(texture_coordinates), normals(normals),
+          used_textures(used_textures) {
+        assert(normals.size() == texture_coordinates.size() && texture_coordinates.size() == vertex_positions.size());
+    };
 
-    Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
-
-    void draw(GLuint shader_program_id);
-
-    void configure_vertex_interpretation_for_shader(GLuint shader_program_id);
-
-  private:
-    void bind_vertex_data_to_opengl_for_later_use();
-
-    void bind_vertex_attribute_interpretation_to_opengl_for_later_use(GLuint shader_program_id);
+    std::vector<TextureInfo> used_textures;
+    std::vector<glm::vec2> texture_coordinates;
+    std::vector<glm::vec3> normals;
 
     unsigned int vertex_attribute_object{}, vertex_buffer_object{}, element_buffer_object{};
 };
 
-/**
- * todo:
- * 	this is not really a model, it's a thing that creates a model...
- * 	this is a different kind of object then a mesh in a way
- * 	one way to fix this is to make a true model class and then make this a
- * model_creator class or something like that for the future, it works now.
- *
- * description:
- * 	a collection of meshes, provides the ability to load from file and to
- * draw it
- *
- * example:
- * 	a 3d model that represents the entire burger as in the mesh example
- */
-class Model {
+struct TexturedModel {
+    std::vector<TexturedMesh> meshes;
+};
+
+class TexturedModelLoader : ModelLoader {
+    //    void recursively_process_nodes(aiNode *node, const aiScene *scene);
+    //    std::vector<Vertex> process_mesh_vertices(aiMesh *mesh);
+    //    std::vector<unsigned int> process_mesh_indices(aiMesh *mesh);
+    std::pair<std::vector<glm::vec2>, std::vector<glm::vec3>> process_mesh_vertices_texture_info(aiMesh *mesh);
+    std::vector<TextureInfo> process_mesh_materials(aiMesh *mesh, const aiScene *scene);
+    std::vector<TextureInfo> get_texture_info_for_material(aiMaterial *material, aiTextureType type,
+                                                           TextureType texture_type);
+
+    TexturedMesh process_mesh(aiMesh *mesh, const aiScene *scene);
+    void process_function(aiMesh *mesh, const aiScene *scene);
+    std::vector<TexturedMesh> recursively_collected_meshes;
+
   public:
-    // Should the shader be stored inside of the model class? Unique to each
-    // shader?
-    Model(std::string path, GLuint shader_program_id);
-
-    void draw();
-
-    void configure_vertex_interpretation_for_shader();
-
-    std::vector<Mesh> meshes;
-
-  private:
-    std::string path_to_assets_directory = "assets";
-
-    void load_model(const std::string &path);
-
-    GLuint shader_program_id;
-
-    std::string directory;
-    std::vector<Texture> already_loaded_textures;
-
-    void process_node(aiNode *node, const aiScene *scene);
-
-    std::vector<Vertex> process_mesh_vertices(aiMesh *mesh);
-
-    std::vector<unsigned int> process_mesh_indices(aiMesh *mesh);
-
-    std::vector<Texture> process_mesh_materials(aiMesh *mesh, const aiScene *scene);
-
-    Mesh process_mesh(aiMesh *mesh, const aiScene *scene);
-
-    std::tuple<bool, int> texture_already_loaded(aiString texture_path);
-
-    std::vector<Texture> load_material_textures(aiMaterial *material, aiTextureType texture_type,
-                                                std::string type_name);
+    TexturedModel load_model(const std::string &path);
 };
 
 #endif // TEXTURED_MODEL_LOADING_HPP
