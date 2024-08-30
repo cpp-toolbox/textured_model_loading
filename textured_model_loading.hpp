@@ -8,7 +8,7 @@
 #include <GLFW/glfw3.h>
 #include <assimp/scene.h>
 
-#include "../../utils/model_loading/model_loading.hpp"
+#include "sbpt_generated_includes.hpp"
 
 enum TextureType { DIFFUSE, SPECULAR };
 
@@ -34,9 +34,14 @@ class TexturedMesh : public Mesh {
     unsigned int vertex_attribute_object{}, vertex_buffer_object{}, element_buffer_object{};
 };
 
-struct TexturedModel {
-    std::vector<TexturedMesh> meshes;
+
+class TexturedModel {
+    public: 
+        TexturedModel(std::vector<TexturedMesh> meshes): meshes(meshes) {};
+        std::vector<TexturedMesh> meshes;
+        std::vector<std::vector<glm::vec3>> get_ordered_vertex_positions_for_each_mesh();
 };
+
 
 class TexturedModelLoader : ModelLoader {
     //    void recursively_process_nodes(aiNode *node, const aiScene *scene);

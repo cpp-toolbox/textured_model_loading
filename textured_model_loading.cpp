@@ -6,7 +6,24 @@
 #include "textured_model_loading.hpp"
 #include "sbpt_generated_includes.hpp"
 
+/**
+ * @brief returns a list of lists of the form specified by \ref get_ordered_vertex_positions
+ *
+ * @return as mentioned in brief
+ */
+std::vector<std::vector<glm::vec3>> TexturedModel::get_ordered_vertex_positions_for_each_mesh() {
+    std::vector<std::vector<glm::vec3>> ovpfem;
+    for (auto &mesh : meshes) {
+        ovpfem.push_back(get_ordered_vertex_positions(mesh.vertex_positions, mesh.indices));
+    }
+    return ovpfem;
+}
+
 TexturedModel TexturedModelLoader::load_model(const std::string &path) {
+
+    // because we may load multiple models, remember to clear out the old data.
+    this->recursively_collected_meshes.clear();
+
     auto process_step = [this](aiMesh *mesh, const aiScene *scene) {
         this->recursively_collected_meshes.push_back(process_mesh(mesh, scene));
     };
@@ -95,10 +112,13 @@ std::vector<TextureInfo> TexturedModelLoader::get_texture_info_for_material(aiMa
                                                                             TextureType texture_type) {
     std::vector<TextureInfo> textures;
     for (unsigned int i = 0; i < material->GetTextureCount(type); i++) {
+
         aiString texture_path;
         material->GetTexture(type, i, &texture_path);
 
-        TextureInfo texture{texture_type, texture_path.C_Str()};
+        std::string asset_path = directory_to_asset_being_loaded + std::string(texture_path.C_Str());
+
+        TextureInfo texture{texture_type, asset_path.c_str()};
         textures.push_back(texture);
     }
     return textures;
